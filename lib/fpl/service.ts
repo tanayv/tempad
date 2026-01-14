@@ -1,4 +1,4 @@
-import { bootstrap_static, picks_by_gameweek, player_history } from "./types/fpl";
+import { bootstrap_static, picks_by_gameweek, player_history, element_summary } from "./types/fpl";
 
 const fplApiUrl = 'https://fantasy.premierleague.com/api';
 
@@ -31,10 +31,11 @@ async function getPicksByGameweek(managerId: string, gameweekId: string) {
 }
 
 async function getPlayerSummary(playerId: string) {
-    return fetchJSON<any>(`/element-summary/${playerId}`);
+    return fetchJSON<element_summary>(`/element-summary/${playerId}/`);
 }
 
 export {
     getBootstrapStatic,
-    getPicksByGameweek
+    getPicksByGameweek,
+    getPlayerSummary
 }

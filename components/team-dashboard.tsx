@@ -1,6 +1,6 @@
 "use client"
 
-import { GameweekTeam } from "@/lib/fpl/operations/getTeamTransfers"
+import { TeamScoreData } from "@/lib/fpl/operations/calculateTeamScores"
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 interface TeamDashboardProps {
-  gameweekTeams: GameweekTeam[]
+  gameweekTeams: TeamScoreData[]
 }
 
 export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
@@ -32,88 +32,121 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
         </p>
       </div>
 
-      {gameweekTeams.map((gameweekTeam) => (
-        <Card key={gameweekTeam.gameweek}>
-          <CardHeader>
-            <CardTitle>Gameweek {gameweekTeam.gameweek}</CardTitle>
-            <CardDescription>
-              {gameweekTeam.transfers.length > 0 ? (
-                <div className="mt-2 space-y-1">
-                  <p className="font-medium text-sm">Transfers:</p>
-                  {gameweekTeam.transfers.map((transfer, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
-                      <Badge variant="destructive" className="text-xs">
-                        OUT
-                      </Badge>
-                      <span>{transfer.elementOutName}</span>
-                      <span className="text-muted-foreground">→</span>
-                      <Badge variant="default" className="text-xs">
-                        IN
-                      </Badge>
-                      <span>{transfer.elementInName}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-sm">No transfers made</span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Position</TableHead>
-                  <TableHead>Player Name</TableHead>
-                  <TableHead>Player ID</TableHead>
-                  <TableHead className="text-center">Multiplier</TableHead>
-                  <TableHead className="text-center">Captain</TableHead>
-                  <TableHead className="text-center">Vice Captain</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {gameweekTeam.players
-                  .sort((a, b) => a.position - b.position)
-                  .map((player) => (
-                    <TableRow
-                      key={`${player.playerId}-${player.position}`}
-                      className={player.position > 11 ? "bg-muted/50" : ""}
-                    >
-                      <TableCell className="font-medium">
-                        {player.position}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {player.playerName}
-                        {player.isCaptain && (
-                          <Badge variant="default" className="ml-2 text-xs">
-                            C
+      {gameweekTeams.map((gameweekTeam) => {
+        // Create a map of player scores for quick lookup
+        const playerScoreMap = new Map(
+          gameweekTeam.playerScores.map((ps) => [ps.playerId, ps])
+        )
+
+        return (
+          <Card key={gameweekTeam.gameweek}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Gameweek {gameweekTeam.gameweek}</CardTitle>
+                <Badge variant="default" className="text-lg px-4 py-1">
+                  Total: {gameweekTeam.totalScore} pts
+                </Badge>
+              </div>
+              <CardDescription>
+                {gameweekTeam.transfers.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    <p className="font-medium text-sm">Transfers:</p>
+                    {gameweekTeam.transferEffectiveness.map((effectiveness, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Badge variant="destructive" className="text-xs">
+                            OUT
                           </Badge>
-                        )}
-                        {player.isViceCaptain && (
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            VC
+                          <span>{effectiveness.transfer.elementOutName}</span>
+                          <span className="text-muted-foreground text-xs">
+                            ({effectiveness.transferredOutPoints} pts)
+                          </span>
+                          <span className="text-muted-foreground">→</span>
+                          <Badge variant="default" className="text-xs">
+                            IN
                           </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {player.playerId}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {player.multiplier}x
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {player.isCaptain ? "✓" : "-"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {player.isViceCaptain ? "✓" : "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
+                          <span>{effectiveness.transfer.elementInName}</span>
+                          <span className="text-muted-foreground text-xs">
+                            ({effectiveness.transferredInPoints} pts)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-1">
+                          <Badge
+                            variant={effectiveness.isPositive ? "default" : "destructive"}
+                            className={`text-xs ${
+                              effectiveness.isPositive
+                                ? "bg-green-600 hover:bg-green-700"
+                                : "bg-red-600 hover:bg-red-700"
+                            }`}
+                          >
+                            {effectiveness.isPositive ? "+" : ""}
+                            {effectiveness.diff} pts
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {effectiveness.isPositive
+                              ? "Good transfer"
+                              : "Bad transfer"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm">No transfers made</span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Position</TableHead>
+                    <TableHead>Player Name</TableHead>
+                    <TableHead className="text-center">GW Points</TableHead>
+                    <TableHead className="text-center">Contributed</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gameweekTeam.players
+                    .sort((a, b) => a.position - b.position)
+                    .map((player) => {
+                      const playerScore = playerScoreMap.get(player.playerId)
+                      return (
+                        <TableRow
+                          key={`${player.playerId}-${player.position}`}
+                          className={player.position > 11 ? "bg-muted/50" : ""}
+                        >
+                          <TableCell className="font-medium">
+                            {player.position}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {player.playerName}
+                            {player.isCaptain && (
+                              <Badge variant="default" className="ml-2 text-xs">
+                                C
+                              </Badge>
+                            )}
+                            {player.isViceCaptain && (
+                              <Badge variant="secondary" className="ml-2 text-xs">
+                                VC
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {playerScore?.gameweekPoints ?? 0}
+                          </TableCell>
+                          <TableCell className="text-center font-semibold">
+                            {playerScore?.contributedPoints ?? 0}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }
