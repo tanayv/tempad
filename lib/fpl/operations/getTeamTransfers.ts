@@ -2,7 +2,7 @@
  * Tracks team transfers across gameweeks by comparing picks between consecutive gameweeks
  */
 
-import { getBootstrapStatic, getPicksByGameweek } from "../service";
+import { getBootstrapStatic, getPicksByGameweek, getManagerEntry } from "../service";
 import { element, picks_by_gameweek } from "../types/fpl";
 import { TeamPlayer } from "./getTeamByGameweek";
 
@@ -98,8 +98,15 @@ function mapPicksToTeamPlayers(
  * Get all teams and transfers for a manager across all elapsed gameweeks
  */
 export async function getTeamTransfers(managerId: string): Promise<GameweekTeam[]> {
+    // Fetch manager entry to get the started event
+    const managerEntry = await getManagerEntry(managerId);
+    const startedEvent = managerEntry.started_event;
+
     const bootstrapStatic = await getBootstrapStatic();
-    const elapsedGameweeks = getElapsedGameweeks(bootstrapStatic.events);
+    const allElapsedGameweeks = getElapsedGameweeks(bootstrapStatic.events);
+
+    // Filter gameweeks to only include those from or after the team's started event
+    const elapsedGameweeks = allElapsedGameweeks.filter(gw => gw >= startedEvent);
 
     // Create element map for quick lookups
     const elementMap = new Map(bootstrapStatic.elements.map(el => [el.id, el]));
