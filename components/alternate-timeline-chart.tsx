@@ -32,12 +32,16 @@ interface AlternateTimelineChartProps {
 }
 
 export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps) {
+
   // Create a combined dataset for the chart using cumulative scores
   const allGameweeks = Array.from(
     new Set(timeline.mainBranch.map((point) => point.gameweek))
   ).sort((a, b) => a - b)
 
-  // Transform data for recharts - branches only start from their origin gameweek
+  // Track termination state for each branch across all gameweeks
+  const branchTerminationState: { [branchId: number]: { markedForTermination: number | null, terminated: boolean } } = {}
+
+  // Transform data for recharts - branches only start from their origin gameweek and terminate with delayed termination logic
   const chartData = allGameweeks.map((gw) => {
     const dataPoint: any = { gameweek: gw }
 
@@ -47,13 +51,39 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
       dataPoint.main = mainScore.cumulativeScore
     }
 
-    // Add each branch's cumulative score only from their origin gameweek onwards
+    // Add each branch's cumulative score only from their origin gameweek onwards,
+    // with delayed termination logic
     timeline.branches.forEach((branch) => {
       // Only add data points from the origin gameweek onwards
       if (gw >= branch.originGameweek) {
         const branchScore = branch.scores.find((score) => score.gameweek === gw)
-        if (branchScore) {
-          dataPoint[`branch_${branch.branchId}`] = branchScore.cumulativeScore
+        if (branchScore && mainScore) {
+          // Initialize termination state if not exists
+          if (!branchTerminationState[branch.branchId]) {
+            branchTerminationState[branch.branchId] = { markedForTermination: null, terminated: false }
+          }
+
+          const pointsGap = mainScore.cumulativeScore - branchScore.cumulativeScore
+          const state = branchTerminationState[branch.branchId]
+
+          // Check if branch should be marked for termination
+          if (pointsGap >= 25 && state.markedForTermination === null) {
+            state.markedForTermination = gw
+          }
+          // Check if gap has closed and branch should be unmarked
+          else if (pointsGap < 25 && state.markedForTermination !== null) {
+            state.markedForTermination = null
+          }
+
+          // Check if branch should be terminated (6 gameweeks after being marked)
+          if (state.markedForTermination !== null && gw >= state.markedForTermination + 6) {
+            state.terminated = true
+          }
+
+          // Add data point if not terminated
+          if (!state.terminated) {
+            dataPoint[`branch_${branch.branchId}`] = branchScore.cumulativeScore
+          }
         }
       }
     })
@@ -91,7 +121,7 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
     <Card className="w-full dark:bg-[#1a0f0a] dark:border-[#8b4513]">
       <CardHeader className="dark:border-b dark:border-[#8b4513]">
         <CardTitle className="dark:text-[#ff9966] font-mono">ALTERNATE TIMELINE ANALYSIS</CardTitle>
-        <CardDescription className="dark:text-[#cc7744] font-mono">
+        <CardDescription className="dark:text-[#cc7744] font-mono mb-4">
           Cumulative scores showing what would have happened if you froze your team at each gameweek
         </CardDescription>
       </CardHeader>
@@ -146,11 +176,12 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
               />
             ))}
 
-            {/* Main branch - thick white line */}
+            {/* Main branch - thick line (black in light mode, white in dark mode) */}
             <Line
               type="monotone"
               dataKey="main"
-              stroke="#ffffff"
+              stroke="currentColor"
+              className="stroke-black dark:stroke-white"
               strokeWidth={4}
               dot={false}
               activeDot={true}
