@@ -21,6 +21,12 @@ export default async function Page({
                 <div className="flex justify-end">
                     <ThemeToggle />
                 </div>
+                <div className="space-y-2">
+                    <h1 className="text-4xl font-bold tracking-tight dark:text-[#ff9966]">FPL Team Timeline</h1>
+                    <p className="text-muted-foreground dark:text-[#cc7744]">
+                    View your team composition and transfers across all gameweeks
+                    </p>
+                </div>
                 <Suspense fallback={<AlternateTimelineLoading />}>
                     <AlternateTimelineWrapper teamScoreData={teamScoreData} />
                 </Suspense>

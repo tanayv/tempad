@@ -27,6 +27,7 @@ export interface TransferEffectiveness {
     transferredOutPoints: number;
     transferredInContributed: number;
     transferredOutHypotheticalContributed: number;
+    transferredOutMultiplier: number;
     diff: number;
     rating: EffectivenessRatingInfo;
 }
@@ -156,7 +157,8 @@ async function calculateGameweekScore(
  */
 async function calculateTransferEffectiveness(
     gameweekTeam: GameweekTeam,
-    playerScores: PlayerScore[]
+    playerScores: PlayerScore[],
+    previousGameweek: GameweekTeam | null = null
 ): Promise<TransferEffectiveness[]> {
     const transferEffectiveness: TransferEffectiveness[] = [];
 
@@ -190,6 +192,15 @@ async function calculateTransferEffectiveness(
             );
         }
 
+        // Get the transferred out player's multiplier from the previous gameweek
+        let transferredOutMultiplier = transferredInMultiplier; // fallback to transferred in multiplier
+        if (previousGameweek) {
+            const previousPlayer = previousGameweek.players.find(p => p.playerId === transfer.elementOut);
+            if (previousPlayer) {
+                transferredOutMultiplier = previousPlayer.multiplier;
+            }
+        }
+
         // Calculate hypothetical contribution using the same multiplier as the transferred in player
         const transferredOutHypotheticalContributed = transferredOutPoints * transferredInMultiplier;
 
@@ -202,6 +213,7 @@ async function calculateTransferEffectiveness(
             transferredOutPoints,
             transferredInContributed,
             transferredOutHypotheticalContributed,
+            transferredOutMultiplier,
             diff,
             rating: getRating(diff),
         });
@@ -377,7 +389,8 @@ export async function calculateTeamScores(
         // Calculate transfer effectiveness
         const transferEffectiveness = await calculateTransferEffectiveness(
             gameweekTeam,
-            gameweekScore.playerScores
+            gameweekScore.playerScores,
+            previousGameweek
         );
 
         // Calculate captain change effectiveness

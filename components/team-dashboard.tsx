@@ -25,12 +25,6 @@ interface TeamDashboardProps {
 export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight dark:text-[#ff9966]">FPL Team Timeline</h1>
-        <p className="text-muted-foreground dark:text-[#cc7744]">
-          View your team composition and transfers across all gameweeks
-        </p>
-      </div>
 
       {gameweekTeams.map((gameweekTeam) => {
         // Create a map of player scores for quick lookup
@@ -67,9 +61,14 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
                 <div className="mt-2 space-y-3">
                   {/* Transfer Effectiveness */}
                   {gameweekTeam.transfers.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-2 pb-2">
                       <p className="font-medium text-sm dark:text-[#ff9966] font-mono">Transfers:</p>
-                      {gameweekTeam.transferEffectiveness.map((effectiveness, idx) => (
+                      {gameweekTeam.transferEffectiveness.map((effectiveness, idx) => {
+                        // Find the transferred in and out players to check their multipliers
+                        const transferredInPlayer = playerScoreMap.get(effectiveness.transfer.elementIn);
+                        const transferredOutPlayer = playerScoreMap.get(effectiveness.transfer.elementOut);
+
+                        return (
                         <div key={idx} className="space-y-1">
                           <div className="flex items-center gap-2 text-sm font-mono">
                             <Badge variant="destructive" className="text-xs font-mono dark:bg-red-900/50 dark:text-red-400">
@@ -77,7 +76,11 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
                             </Badge>
                             <span className="dark:text-[#cc7744]">{effectiveness.transfer.elementOutName}</span>
                             <span className="text-muted-foreground text-xs dark:text-[#8b6f47]">
-                              ({effectiveness.transferredOutPoints} pts)
+                              ({effectiveness.transferredOutMultiplier === 0 ? (
+                                <><span className="line-through">{effectiveness.transferredOutPoints}</span> → 0 pts 🚫</>
+                              ) : (
+                                `${effectiveness.transferredOutPoints} pts`
+                              )})
                             </span>
                             <span className="text-muted-foreground dark:text-[#cc7744]">→</span>
                             <Badge variant="default" className="text-xs font-mono dark:bg-green-900/50 dark:text-green-400">
@@ -85,7 +88,11 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
                             </Badge>
                             <span className="dark:text-[#cc7744]">{effectiveness.transfer.elementInName}</span>
                             <span className="text-muted-foreground text-xs dark:text-[#8b6f47]">
-                              ({effectiveness.transferredInPoints} pts)
+                              ({transferredInPlayer?.multiplier === 0 ? (
+                                <><span className="line-through">{effectiveness.transferredInPoints}</span> → 0 pts 🚫</>
+                              ) : (
+                                `${effectiveness.transferredInPoints} pts`
+                              )})
                             </span>
                           </div>
                           <div className="flex items-center gap-2 ml-1">
@@ -100,15 +107,16 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
                             </span>
                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : (
-                    <span className="text-sm">No transfers made</span>
+                    <span className="text-sm pb-2 block">No transfers made</span>
                   )}
 
                   {/* Captain Change Effectiveness */}
                   {gameweekTeam.captainChangeEffectiveness && (
-                    <div className="space-y-2 pt-2 border-t dark:border-[#8b4513]">
+                    <div className="space-y-2 pt-2 pb-2 border-t dark:border-[#8b4513]">
                       <p className="font-medium text-sm dark:text-[#ff9966] font-mono">Captain Change:</p>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm">
