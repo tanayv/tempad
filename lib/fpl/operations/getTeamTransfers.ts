@@ -34,7 +34,7 @@ function getElapsedGameweeks(events: any[]): number[] {
  * Compare two sets of picks to identify transfers
  */
 function detectTransfers(
-    previousGameweek: number,
+    _previousGameweek: number,
     currentGameweek: number,
     previousPicks: picks_by_gameweek,
     currentPicks: picks_by_gameweek,

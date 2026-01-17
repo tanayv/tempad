@@ -66,7 +66,6 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
                       {gameweekTeam.transferEffectiveness.map((effectiveness, idx) => {
                         // Find the transferred in and out players to check their multipliers
                         const transferredInPlayer = playerScoreMap.get(effectiveness.transfer.elementIn);
-                        const transferredOutPlayer = playerScoreMap.get(effectiveness.transfer.elementOut);
 
                         return (
                         <div key={idx} className="space-y-1">
