@@ -24,7 +24,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceDot,
 } from "recharts"
 
 interface AlternateTimelineChartProps {
@@ -43,7 +42,7 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
 
   // Transform data for recharts - branches only start from their origin gameweek and terminate with delayed termination logic
   const chartData = allGameweeks.map((gw) => {
-    const dataPoint: any = { gameweek: gw }
+    const dataPoint: Record<string, number> = { gameweek: gw }
 
     // Add main branch cumulative score
     const mainScore = timeline.mainBranch.find((point) => point.gameweek === gw)
@@ -64,7 +63,7 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
           }
 
           const pointsGap = mainScore.cumulativeScore - branchScore.cumulativeScore
-          const state = branchTerminationState[branch.branchId]
+          const state = branchTerminationState[branch.branchId]!
 
           // Check if branch should be marked for termination
           if (pointsGap >= 25 && state.markedForTermination === null) {
@@ -92,12 +91,24 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
   })
 
   // Custom tooltip to show branch info on hover
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label
+  }: {
+    active?: boolean
+    payload?: ReadonlyArray<{
+      dataKey: string
+      value: number
+      color?: string
+    }>
+    label?: string | number
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border border-border rounded-md p-3 shadow-lg dark:bg-[#1a0f0a] dark:border-[#8b4513]">
           <p className="font-semibold mb-2 dark:text-[#ff9966]">Gameweek {label}</p>
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry, index: number) => {
             const isMain = entry.dataKey === "main"
             const branchId = isMain ? null : parseInt(entry.dataKey.replace("branch_", ""))
             const branch = branchId !== null ? timeline.branches[branchId] : null
@@ -159,7 +170,7 @@ export function AlternateTimelineChart({ timeline }: AlternateTimelineChartProps
               className="dark:stroke-[#cc7744]"
               tick={{ className: "dark:fill-[#cc7744]" }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={CustomTooltip} />
 
             {/* Alternate branches - yellow/orange lines same thickness starting from origin */}
             {timeline.branches.map((branch) => (

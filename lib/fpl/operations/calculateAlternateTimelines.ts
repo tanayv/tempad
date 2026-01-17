@@ -96,6 +96,7 @@ export async function calculateAlternateTimelines(
 
     for (let i = 0; i < teamScoreData.length; i++) {
         const originTeam = teamScoreData[i];
+        if (!originTeam) continue;
         const originGameweek = originTeam.gameweek;
 
         // Calculate scores for this frozen team across all subsequent gameweeks
@@ -104,10 +105,12 @@ export async function calculateAlternateTimelines(
 
         // Add scores for all gameweeks from the start up to origin
         for (let k = 0; k < i; k++) {
-            branchCumulative += teamScoreData[k].totalScore;
+            const gameweekData = teamScoreData[k];
+            if (!gameweekData) continue;
+            branchCumulative += gameweekData.totalScore;
             branchScores.push({
-                gameweek: teamScoreData[k].gameweek,
-                gameweekScore: teamScoreData[k].totalScore,
+                gameweek: gameweekData.gameweek,
+                gameweekScore: gameweekData.totalScore,
                 cumulativeScore: branchCumulative
             });
         }
@@ -122,7 +125,9 @@ export async function calculateAlternateTimelines(
 
         // Calculate scores for all subsequent gameweeks using frozen team
         for (let j = i + 1; j < teamScoreData.length; j++) {
-            const targetGameweek = teamScoreData[j].gameweek;
+            const targetGameweekData = teamScoreData[j];
+            if (!targetGameweekData) continue;
+            const targetGameweek = targetGameweekData.gameweek;
 
             const frozenScore = await calculateFrozenTeamScore(
                 originTeam,
