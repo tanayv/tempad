@@ -9,9 +9,18 @@ function getBaseUrl(): string {
         return '';
     }
 
-    // Server-side: use absolute URL for localhost
-    // In production, you might want to use VERCEL_URL or your domain
-    return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Server-side: determine the correct base URL
+    // Check for production environment variables
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+
+    if (process.env.NEXT_PUBLIC_SITE_URL) {
+        return process.env.NEXT_PUBLIC_SITE_URL;
+    }
+
+    // Fallback for local development
+    return 'http://localhost:3000';
 }
 
 async function fetchJSON<T>(endpoint: string): Promise<T> {
