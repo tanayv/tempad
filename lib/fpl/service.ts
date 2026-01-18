@@ -1,21 +1,34 @@
 import { bootstrap_static, picks_by_gameweek, element_summary, entry_response } from "./types/fpl";
 
-const fplApiUrl = 'https://fantasy.premierleague.com/api';
+// Use our internal API routes to avoid CORS issues
+const internalApiUrl = '/api/fpl';
+
+function getBaseUrl(): string {
+    // Client-side: use relative URLs
+    if (typeof window !== 'undefined') {
+        return '';
+    }
+
+    // Server-side: use absolute URL for localhost
+    // In production, you might want to use VERCEL_URL or your domain
+    return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+}
 
 async function fetchJSON<T>(endpoint: string): Promise<T> {
-    const url = `${fplApiUrl}${endpoint}`;
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}${internalApiUrl}${endpoint}`;
     const response = await fetch(url);
 
     if (!response.ok) {
-
-        throw new Error(`FPL API error: ${response.statusText} ${endpoint}`);
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.statusText} ${endpoint} - ${errorText}`);
     }
 
     return response.json();
 }
 
 async function getBootstrapStatic() {
-    return fetchJSON<bootstrap_static>('/bootstrap-static/');
+    return fetchJSON<bootstrap_static>('/bootstrap-static');
 }
 
 
@@ -25,11 +38,11 @@ async function getPicksByGameweek(managerId: string, gameweekId: string) {
 }
 
 async function getPlayerSummary(playerId: string) {
-    return fetchJSON<element_summary>(`/element-summary/${playerId}/`);
+    return fetchJSON<element_summary>(`/element-summary/${playerId}`);
 }
 
 async function getManagerEntry(managerId: string) {
-    return fetchJSON<entry_response>(`/entry/${managerId}/`);
+    return fetchJSON<entry_response>(`/entry/${managerId}`);
 }
 
 export {

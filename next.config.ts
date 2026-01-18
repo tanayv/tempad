@@ -8,18 +8,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ['image/webp', 'image/avif'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'resources.premierleague.com',
+        port: '',
+        pathname: '/premierleague/photos/players/**',
+      },
+    ],
   },
   output: 'standalone',
 };
-
-// Enable bundle analyzer when ANALYZE=true
-if (process.env.ANALYZE === 'true') {
-  const withBundleAnalyzer = require('@next/bundle-analyzer')({
-    enabled: true,
-  });
-  module.exports = withBundleAnalyzer(nextConfig);
-} else {
-  module.exports = nextConfig;
-}
 
 export default nextConfig;
