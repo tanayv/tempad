@@ -23,7 +23,7 @@ export interface GameweekTeam {
 /**
  * Get all elapsed (finished) gameweeks
  */
-function getElapsedGameweeks(events: any[]): number[] {
+function getElapsedGameweeks(events: { id: number; finished: boolean }[]): number[] {
     return events
         .filter(event => event.finished === true)
         .map(event => event.id)

@@ -25,14 +25,13 @@ export function ThemeProvider({
   storageKey = "fpl-tempad-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem(storageKey) as Theme
-    if (storedTheme) {
-      setTheme(storedTheme)
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem(storageKey) as Theme
+      return storedTheme || defaultTheme
     }
-  }, [storageKey])
+    return defaultTheme
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
