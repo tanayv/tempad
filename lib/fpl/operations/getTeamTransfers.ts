@@ -2,7 +2,7 @@
  * Tracks team transfers across gameweeks by comparing picks between consecutive gameweeks
  */
 
-import { getBootstrapStatic, getPicksByGameweek, getManagerEntry } from "../service";
+import { getBootstrapStaticCached as getBootstrapStatic, getPicksByGameweek, getManagerEntry } from "../fpl-service";
 import { element, picks_by_gameweek } from "../types/fpl";
 import { TeamPlayer } from "./getTeamByGameweek";
 

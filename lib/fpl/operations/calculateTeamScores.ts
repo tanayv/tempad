@@ -2,7 +2,7 @@
  * Calculate team scores with player contributions across gameweeks
  */
 
-import { getPlayerSummary } from "../service";
+import { getPlayerSummary } from "../fpl-service";
 import { GameweekTeam, Transfer } from "./getTeamTransfers";
 
 export interface PlayerScore {

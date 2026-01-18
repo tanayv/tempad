@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { TeamScoreData } from "@/lib/fpl/operations/calculateTeamScores"
-import { getBootstrapStatic } from "@/lib/fpl/service"
-import { element, team } from "@/lib/fpl/types/fpl"
+import { element, team, bootstrap_static } from "@/lib/fpl/types/fpl"
 import { PlayerOverlay } from "@/components/player-overlay"
 import {
   Card,
@@ -24,9 +23,10 @@ import { Badge } from "@/components/ui/badge"
 
 interface TeamDashboardProps {
   gameweekTeams: TeamScoreData[]
+  bootstrapData: bootstrap_static
 }
 
-export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
+export function TeamDashboard({ gameweekTeams, bootstrapData }: TeamDashboardProps) {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState<{
     id: number
@@ -46,44 +46,33 @@ export function TeamDashboard({ gameweekTeams }: TeamDashboardProps) {
     weeksInTeam?: number
     pointsWhileInTeam?: number
   } | null>(null)
-  const [elements, setElements] = useState<Map<number, element>>(new Map())
-  const [teams, setTeams] = useState<Map<number, team>>(new Map())
-  const [elementTypes, setElementTypes] = useState<Map<number, { name: string }>>(new Map())
+  // Memoize the processed bootstrap data
+  const { elements, teams, elementTypes } = useMemo(() => {
+    // Create element map
+    const elementsMap = new Map<number, element>()
+    bootstrapData.elements.forEach(element => {
+      elementsMap.set(element.id, element)
+    })
 
-  // Fetch bootstrap-static data on component mount
-  useEffect(() => {
-    const fetchBootstrapData = async () => {
-      try {
-        const bootstrapData = await getBootstrapStatic()
+    // Create teams map
+    const teamsMap = new Map<number, team>()
+    bootstrapData.teams.forEach(team => {
+      teamsMap.set(team.id, team)
+    })
 
-        // Create element map
-        const elementsMap = new Map<number, element>()
-        bootstrapData.elements.forEach(element => {
-          elementsMap.set(element.id, element)
-        })
-        setElements(elementsMap)
+    // Create element types map
+    const typesMap = new Map()
+    bootstrapData.element_types.forEach((type: unknown) => {
+      const elementType = type as { id: number; singular_name: string }
+      typesMap.set(elementType.id, { name: elementType.singular_name })
+    })
 
-        // Create teams map
-        const teamsMap = new Map<number, team>()
-        bootstrapData.teams.forEach(team => {
-          teamsMap.set(team.id, team)
-        })
-        setTeams(teamsMap)
-
-        // Create element types map
-        const typesMap = new Map()
-        bootstrapData.element_types.forEach((type: unknown) => {
-          const elementType = type as { id: number; singular_name: string }
-          typesMap.set(elementType.id, { name: elementType.singular_name })
-        })
-        setElementTypes(typesMap)
-      } catch (error) {
-        console.error('Failed to fetch bootstrap data:', error)
-      }
+    return {
+      elements: elementsMap,
+      teams: teamsMap,
+      elementTypes: typesMap
     }
-
-    fetchBootstrapData()
-  }, [])
+  }, [bootstrapData])
 
   const handlePlayerClick = (
     playerId: number,

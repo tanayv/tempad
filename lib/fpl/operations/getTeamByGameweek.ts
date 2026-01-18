@@ -13,7 +13,7 @@
  * }
  */
 
-import { getBootstrapStatic, getPicksByGameweek } from "../service";
+import { getBootstrapStaticCached as getBootstrapStatic, getPicksByGameweek } from "../fpl-service";
 import { element, picks_by_gameweek } from "../types/fpl";
 
 export interface TeamPlayer {

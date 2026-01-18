@@ -2,7 +2,7 @@
  * Calculate alternate timeline branches showing what would happen if teams were frozen at each gameweek
  */
 
-import { getPlayerSummary } from "../service";
+import { getPlayerSummary } from "../fpl-service";
 import { GameweekTeam } from "./getTeamTransfers";
 import { TeamScoreData } from "./calculateTeamScores";
 

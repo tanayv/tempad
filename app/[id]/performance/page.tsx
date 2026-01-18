@@ -1,5 +1,6 @@
 import { getTeamTransfers } from '@/lib/fpl/operations/getTeamTransfers'
 import { calculateTeamScores } from '@/lib/fpl/operations/calculateTeamScores'
+import { getBootstrapStaticCached } from '@/lib/fpl/fpl-service'
 import { TeamDashboard } from '@/components/team-dashboard'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { PageNavigation } from '@/components/page-navigation'
@@ -10,7 +11,13 @@ export default async function PerformancePage({
     params: Promise<{ id: string }>
 }) {
     const { id } = await params
-    const gameweekTeams = await getTeamTransfers(id)
+
+    // Fetch all data on the server
+    const [gameweekTeams, bootstrapData] = await Promise.all([
+        getTeamTransfers(id),
+        getBootstrapStaticCached()
+    ]);
+
     const teamScoreData = await calculateTeamScores(gameweekTeams)
 
     return (
@@ -26,7 +33,7 @@ export default async function PerformancePage({
                         Analyze your team composition and player performance across gameweeks
                     </p>
                 </div>
-                <TeamDashboard gameweekTeams={teamScoreData} />
+                <TeamDashboard gameweekTeams={teamScoreData} bootstrapData={bootstrapData} />
             </div>
         </div>
     )
