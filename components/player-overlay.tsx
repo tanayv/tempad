@@ -67,6 +67,7 @@ function PlayerOverlayComponent({ isOpen, onClose, playerData }: PlayerOverlayPr
   if (!isOpen) return null
 
   const playerImageUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerData.photo.replace('.jpg', '')}.png`
+  const fallbackImageUrl = `https://resources.premierleague.com/premierleague25/photos/players/110x140/p${playerData.photo.replace('.jpg', '')}.png`
   const statusColor = playerData.status === "TRANSFERRED IN"
     ? "text-green-400 border-green-400 bg-green-900/20"
     : "text-red-400 border-red-400 bg-red-900/20"
@@ -168,16 +169,20 @@ function PlayerOverlayComponent({ isOpen, onClose, playerData }: PlayerOverlayPr
                   } as React.CSSProperties}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
-                    target.style.display = 'none'
-                    target.parentElement!.innerHTML = `
-                      <div class="w-full h-full flex items-center justify-center text-[#ff9966] text-xs font-mono">
-                        <div class="text-center">
-                          <div class="text-lg">⚠</div>
-                          <div>IMG</div>
-                          <div>ERROR</div>
+                    if (target.src !== fallbackImageUrl) {
+                      target.src = fallbackImageUrl
+                    } else {
+                      target.style.display = 'none'
+                      target.parentElement!.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center text-[#ff9966] text-xs font-mono">
+                          <div class="text-center">
+                            <div class="text-lg">⚠</div>
+                            <div>IMG</div>
+                            <div>ERROR</div>
+                          </div>
                         </div>
-                      </div>
-                    `
+                      `
+                    }
                   }}
                 />
                 {/* Additional pixelation overlay */}
@@ -222,40 +227,74 @@ function PlayerOverlayComponent({ isOpen, onClose, playerData }: PlayerOverlayPr
             <h3 className="text-[#ffb380] font-mono text-xl tracking-wider uppercase font-bold">
               {playerData.lastName}
             </h3>
-            <p className="text-[#cc7a52] font-mono text-sm tracking-wide mt-1">
-              {playerData.webName} • {playerData.position} • {playerData.team}
+            <p className="text-[#cc7a52] font-mono text-sm tracking-wide mt-1 uppercase">
+              {playerData.position}
             </p>
           </div>
         </div>
 
         {/* Stats Section */}
         <div className="p-4 space-y-4">
-          {/* Performance Grid */}
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="border border-[#8b4513]/50 bg-black/30 p-3">
-              <div className="text-[#ff9966] font-mono text-xs tracking-wider uppercase mb-1">
-                CURRENT GW
+          {/* Performance Grid - Show GW stats only for transferred in players */}
+          {playerData.status === "TRANSFERRED IN" && (
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="border border-[#8b4513]/50 bg-black/30 p-3">
+                <div className="text-[#ff9966] font-mono text-xs tracking-wider uppercase mb-1">
+                  CURRENT GW
+                </div>
+                <div className="text-green-400 font-mono text-2xl font-bold">
+                  {playerData.currentGameweekPoints ?? '--'}
+                </div>
+                <div className="text-[#cc7a52] font-mono text-xs">
+                  POINTS
+                </div>
               </div>
-              <div className="text-green-400 font-mono text-2xl font-bold">
-                {playerData.currentGameweekPoints ?? '--'}
-              </div>
-              <div className="text-[#cc7a52] font-mono text-xs">
-                POINTS
-              </div>
-            </div>
 
-            <div className="border border-[#8b4513]/50 bg-black/30 p-3">
-              <div className="text-[#ff9966] font-mono text-xs tracking-wider uppercase mb-1">
-                PREV GW
-              </div>
-              <div className="text-green-400 font-mono text-2xl font-bold">
-                {playerData.previousGameweekPoints ?? '--'}
-              </div>
-              <div className="text-[#cc7a52] font-mono text-xs">
-                POINTS
+              <div className="border border-[#8b4513]/50 bg-black/30 p-3">
+                <div className="text-[#ff9966] font-mono text-xs tracking-wider uppercase mb-1">
+                  PREV GW
+                </div>
+                <div className="text-green-400 font-mono text-2xl font-bold">
+                  {playerData.previousGameweekPoints ?? '--'}
+                </div>
+                <div className="text-[#cc7a52] font-mono text-xs">
+                  POINTS
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Time in Team Section for transferred out players */}
+          {playerData.status === "TRANSFERRED OUT" && (playerData.weeksInTeam || playerData.pointsWhileInTeam) && (
+            <div className="grid grid-cols-2 gap-4 text-center">
+              {playerData.weeksInTeam && (
+                <div className="border border-red-400/50 bg-red-900/20 p-3">
+                  <div className="text-red-400 font-mono text-xs tracking-wider uppercase mb-1">
+                    WEEKS IN TEAM
+                  </div>
+                  <div className="text-red-300 font-mono text-2xl font-bold">
+                    {playerData.weeksInTeam}
+                  </div>
+                  <div className="text-red-400/70 font-mono text-xs">
+                    WEEKS
+                  </div>
+                </div>
+              )}
+              {playerData.pointsWhileInTeam !== undefined && (
+                <div className="border border-red-400/50 bg-red-900/20 p-3">
+                  <div className="text-red-400 font-mono text-xs tracking-wider uppercase mb-1">
+                    CONTRIBUTED
+                  </div>
+                  <div className="text-red-300 font-mono text-2xl font-bold">
+                    {playerData.pointsWhileInTeam}
+                  </div>
+                  <div className="text-red-400/70 font-mono text-xs">
+                    POINTS
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Additional Stats */}
           <div className="grid grid-cols-3 gap-2 text-center">
@@ -287,38 +326,6 @@ function PlayerOverlayComponent({ isOpen, onClose, playerData }: PlayerOverlayPr
             </div>
           </div>
 
-          {/* Transferred Out Stats */}
-          {playerData.status === "TRANSFERRED OUT" && (playerData.weeksInTeam || playerData.pointsWhileInTeam) && (
-            <div className="border-t border-red-400/30 pt-4 mt-4">
-              <div className="text-center mb-3">
-                <div className="text-red-400 font-mono text-xs tracking-wider uppercase">
-                  TIME IN TEAM
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {playerData.weeksInTeam && (
-                  <div className="border border-red-400/30 bg-red-900/10 p-2">
-                    <div className="text-red-400 font-mono text-xs tracking-wider uppercase">
-                      WEEKS
-                    </div>
-                    <div className="text-red-300 font-mono text-lg font-bold">
-                      {playerData.weeksInTeam}
-                    </div>
-                  </div>
-                )}
-                {playerData.pointsWhileInTeam !== undefined && (
-                  <div className="border border-red-400/30 bg-red-900/10 p-2">
-                    <div className="text-red-400 font-mono text-xs tracking-wider uppercase">
-                      POINTS CONTRIBUTED
-                    </div>
-                    <div className="text-red-300 font-mono text-lg font-bold">
-                      {playerData.pointsWhileInTeam}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Player ID Display */}
           <div className="border-t border-[#8b4513]/50 pt-3">
